@@ -68,6 +68,10 @@ public class CheckSignDir
 		}
 		
 		File[] files = getFiles(f);
+		if(files == null)
+		{
+			return;
+		}
 
 		for(File file : files)
 		{
