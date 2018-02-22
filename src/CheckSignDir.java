@@ -18,16 +18,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import java.io.File;
 
+import it.dsestili.jhashcode.core.DirectoryInfo;
+import it.dsestili.jhashcode.core.DirectoryScanner;
+import it.dsestili.jhashcode.core.DirectoryScannerNotRecursive;
+import it.dsestili.jhashcode.core.DirectoryScannerRecursive;
+import it.dsestili.jhashcode.core.IScanProgressListener;
+import it.dsestili.jhashcode.core.ProgressEvent;
+
 public class CheckSignDir 
 {
 	private static int okCount = 0, badCount = 0;
+	private static String modeParam;
+	private static boolean recursive;
 	
 	public static void main(String[] args) 
 	{
-		if(args.length == 1)
-		{
+		if(args.length == 2)
+		{	
 			try
 			{
+				modeParam = args[1];
 				checkDir(args[0]);
 			}
 			catch(Throwable t)
@@ -37,7 +47,7 @@ public class CheckSignDir
 		}
 		else
 		{
-			System.out.println("Usage: param 1: directory to check");
+			System.out.println("Usage: param 1: directory to check, param2: modeParam (not-recursive, recursive, no-subfolders)");
 		}
 	}
 	
@@ -57,7 +67,7 @@ public class CheckSignDir
 			return;
 		}
 		
-		File[] files = f.listFiles();
+		File[] files = getFiles(f);
 
 		for(File file : files)
 		{
@@ -86,5 +96,52 @@ public class CheckSignDir
 			System.out.println(" BAD Signature");
 			badCount++;
 		}
+	}
+	
+	private static File[] getFiles(File directory) throws Throwable
+	{
+		File[] result = null;
+		DirectoryScanner scanner = null;
+		
+		if(modeParam != null && modeParam.trim().equals("not-recursive"))
+		{
+			recursive = true;
+			scanner = new DirectoryScannerNotRecursive(directory, recursive);
+		}
+		else if(modeParam != null && modeParam.trim().equals("recursive"))
+		{
+			recursive = true;
+			scanner = new DirectoryScannerRecursive(directory, recursive);
+		}
+		else if(modeParam != null && modeParam.trim().equals("no-subfolders"))
+		{
+			recursive = false;
+			scanner = new DirectoryScannerNotRecursive(directory, recursive);
+		}
+		else
+		{
+			System.out.println("Mode error");
+			return result;
+		}
+		
+		scanner.addIScanProgressListener(new IScanProgressListener() {
+			public void scanProgressEvent(ProgressEvent event)
+			{
+				System.out.println(event);
+			}
+		});
+		
+		DirectoryInfo di = scanner.getFiles();
+		result = di.getFiles();
+		long totalSize = di.getTotalSize();
+		
+		System.out.println("Scanning completed, " + result.length + " files found, " + totalSize + " bytes total size");
+		
+		if(di.getSymbolicLinksExcluded() > 0 || di.getHiddenFilesExcluded() > 0)
+		{
+			System.out.println(di.getSymbolicLinksExcluded() + " symlink excluded, " + di.getHiddenFilesExcluded() + " hidden files excluded");
+		}
+		
+		return result;
 	}
 }
