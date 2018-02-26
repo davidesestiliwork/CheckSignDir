@@ -84,10 +84,10 @@ public class CheckSignDir
 		System.out.println("OK: " + okCount + " - BAD: " + badCount);
 	}
 	
-	private static void checkSign(File ascFile) throws Throwable
+	private static void checkSign(File file) throws Throwable
 	{
-		System.out.print(ascFile.getName());
-		ProcessBuilder builder = new ProcessBuilder("gpg", "--verify", ascFile.getAbsolutePath());
+		System.out.print(file.getAbsolutePath());
+		ProcessBuilder builder = new ProcessBuilder("gpg", "--verify", file.getAbsolutePath());
 		Process process = builder.start();
 		int exitCode = process.waitFor();
 		if(exitCode == 0)
